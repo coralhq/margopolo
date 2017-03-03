@@ -16,6 +16,15 @@ const (
 
 	// PubSubAccess an access level that user can publish and subscribe to certain topic
 	PubSubAccess = 3
+
+	// QosFireAndForget at most once
+	QosFireAndForget = 0
+
+	// QosAtLeastOnce might create duplicate deliveries
+	QosAtLeastOnce = 1
+
+	// QosExactlyOnce exactly once deliveries guaranteed
+	QosExactlyOnce = 2
 )
 
 var client *redis.Client
