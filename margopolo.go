@@ -36,6 +36,18 @@ func PasswordHash(password string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+// SetRedisURL sets URL to be used by Redis connection
+// sample: redis://username:password@host:port/0
+func SetRedisURL(url string) error {
+	var err error
+
+	if opts, err := redis.ParseURL(url); err != nil {
+		client = redis.NewClient(opts)
+	}
+
+	return err
+}
+
 // SetRedisOptions sets options to be used by Redis connection
 func SetRedisOptions(addr string, password string, db int) {
 	client = redis.NewClient(&redis.Options{
