@@ -58,29 +58,20 @@ func SetRedisOptions(addr string, password string, db int) {
 }
 
 // SetUser sets mqtt user and password
-func SetUser(username string, password string) {
-	err := client.HSet("mqtt_user:"+username, "password", PasswordHash(password)).Err()
-	if err != nil {
-		panic(err)
-	}
+func SetUser(username string, password string) error {
+	return client.HSet("mqtt_user:"+username, "password", PasswordHash(password)).Err()
 }
 
 // SetRule sets ACL rule
 // topic: e.g. chats/+/messages/#
 // accessLevel: 1=Sub 2=Pub 3=PubSub
-func SetRule(username string, topic string, accessLevel int) {
-	err := client.HSet("mqtt_acl:"+username, topic, accessLevel).Err()
-	if err != nil {
-		panic(err)
-	}
+func SetRule(username string, topic string, accessLevel int) error {
+	return client.HSet("mqtt_acl:"+username, topic, accessLevel).Err()
 }
 
 // SetSubscription sets static subscription for user
 // topic: e.g. chats/+/messages/#
 // accessLevel: 0=AtMostOnce 1=AtLeastOnce 2=ExactlyOnce
-func SetSubscription(username string, topic string, qos int) {
-	err := client.HSet("mqtt_sub:"+username, topic, qos).Err()
-	if err != nil {
-		panic(err)
-	}
+func SetSubscription(username string, topic string, qos int) error {
+	return client.HSet("mqtt_sub:"+username, topic, qos).Err()
 }
