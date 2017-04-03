@@ -24,6 +24,7 @@ var (
 
 	fromStdin bool
 	config    string
+	file      string
 )
 
 func getAccessLevel(str string) (int, error) {
@@ -100,13 +101,27 @@ func processLine(line string) error {
 }
 
 func main() {
-	flag.StringVar(&redisAddr, "addr", "", "Redis address")
-	flag.StringVar(&redisHost, "host", "localhost", "Redis Host")
-	flag.IntVar(&redisPort, "port", 6379, "Redis Port")
-	flag.StringVar(&redisPass, "pass", "", "Redis Password")
-	flag.IntVar(&redisDb, "db", 0, "Redis DB")
+	redisAddr = os.Getenv("REDIS_ADDR")
+	redisHost = os.Getenv("REDIS_HOST")
+	redisPort, _ = strconv.Atoi(os.Getenv("REDIS_PORT"))
+	redisPass = os.Getenv("REDIS_PASS")
+	redisDb, _  = strconv.Atoi(os.Getenv("REDIS_DB"))
+
+	if redisHost == "" {
+		redisHost = "localhost"
+	}
+	if redisPort == 0 {
+		redisPort = 6379
+	}
+
+	flag.StringVar(&redisAddr, "addr", redisAddr, "Redis address")
+	flag.StringVar(&redisHost, "host", redisHost, "Redis Host")
+	flag.IntVar(&redisPort, "port", redisPort, "Redis Port")
+	flag.StringVar(&redisPass, "pass", redisPass, "Redis Password")
+	flag.IntVar(&redisDb, "db", redisDb, "Redis DB")
 	flag.BoolVar(&fromStdin, "stdin", false, "Read from stdin")
 	flag.StringVar(&config, "config", "", "Config definition")
+	flag.StringVar(&file, "file", "", "Config definition")
 	flag.Parse()
 
 	if redisAddr == "" {
@@ -118,6 +133,10 @@ func main() {
 
 	if fromStdin {
 		processConfig(os.Stdin)
+	} else if file != ""{
+		f, _ := os.Open(file)
+		defer f.Close()
+		processConfig(f)
 	} else if config != "" {
 		processConfig(strings.NewReader(config))
 	} else {
