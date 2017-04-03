@@ -42,7 +42,8 @@ func getAccessLevel(str string) (int, error) {
 func processConfig(r io.Reader) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := os.ExpandEnv(scanner.Text())
+
 		if err := processLine(strings.TrimSpace(line)); err != nil {
 			log.Fatalf("%s: %s", line, err)
 		}
@@ -60,7 +61,7 @@ func processLine(line string) error {
 	case len(tokens) == 0:
 		return nil
 	case len(tokens) < 4:
-		return errors.New("invalid format")
+		return errors.New(tokens[0] + ": invalid format")
 	}
 
 	ks := tokens[0]
@@ -70,7 +71,7 @@ func processLine(line string) error {
 	switch ks {
 	case "user":
 		if key != "password" {
-			return errors.New("invalid format")
+			return errors.New("currently only supports password field")
 		}
 
 		var password = tokens[3]
