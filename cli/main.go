@@ -16,6 +16,10 @@ import (
 )
 
 var (
+	e = log.New(os.Stderr, "ERROR: ", log.LstdFlags)
+	w = log.New(os.Stderr, "WARNING: ", log.LstdFlags)
+	i = log.New(os.Stdout, "INFO: ", log.LstdFlags)
+
 	redisAddr string
 	redisHost string
 	redisPort int
@@ -44,9 +48,9 @@ func expandWithLog(key string) string {
 	val := os.Getenv(key)
 
 	if val == "" {
-		log.Printf("%s env var is not set", key)
+		w.Printf("%s env var is not set", key)
 	}
-	
+
 	return val
 }
 
@@ -56,7 +60,7 @@ func processConfig(r io.Reader) {
 		line := os.Expand(scanner.Text(), expandWithLog)
 
 		if err := processLine(strings.TrimSpace(line)); err != nil {
-			log.Fatalf("%s: %s", line, err)
+			e.Fatalf("%s: %s", line, err)
 		}
 	}
 }
@@ -72,7 +76,7 @@ func processLine(line string) error {
 	case len(tokens) == 0:
 		return nil
 	case len(tokens) < 4:
-		return errors.New(tokens[0] + ": invalid format")
+		return errors.New("invalid format")
 	}
 
 	ks := tokens[0]
@@ -137,8 +141,7 @@ func main() {
 	if redisAddr == "" {
 		redisAddr = fmt.Sprintf("%s:%d", redisHost, redisPort)
 	}
-
-	log.Printf("redis://:***@%s/%d", redisAddr, redisDb)
+	i.Printf("redis://:***@%s/%d", redisAddr, redisDb)
 	ACL.SetRedisOptions(redisAddr, redisPass, redisDb)
 
 	if fromStdin {
