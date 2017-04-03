@@ -48,7 +48,7 @@ func expandWithLog(key string) string {
 	val := os.Getenv(key)
 
 	if val == "" {
-		w.Printf("%s env var is not set", key)
+		w.Printf("%s env var is not set\n", key)
 	}
 
 	return val
@@ -59,26 +59,29 @@ func processConfig(r io.Reader) {
 	for scanner.Scan() {
 		line := os.Expand(scanner.Text(), expandWithLog)
 
-		if err := processLine(strings.TrimSpace(line)); err != nil {
-			e.Fatalf("%s: %s", line, err)
+		if logid, err := processLine(strings.TrimSpace(line)); err == nil {
+			i.Println(logid)
+		} else {
+			e.Fatalf("%s: %s", logid, err)
 		}
 	}
 }
 
-func processLine(line string) error {
+func processLine(line string) (string, error) {
 	if line == "" {
-		return nil
+		return "<emptyline>", nil
 	}
 
 	tokens := strings.Split(line, " ")
 
 	switch {
 	case len(tokens) == 0:
-		return nil
+		return "<emptyline>", nil
 	case len(tokens) < 4:
-		return errors.New("invalid format")
+		return "", errors.New("invalid format")
 	}
 
+	logid := strings.Join(tokens[0:3], " ")
 	ks := tokens[0]
 	username := tokens[1]
 	key := tokens[2]
@@ -86,32 +89,32 @@ func processLine(line string) error {
 	switch ks {
 	case "user":
 		if key != "password" {
-			return errors.New("currently only supports password field")
+			return logid, errors.New("currently only supports password field")
 		}
 
 		var password = tokens[3]
-		return ACL.SetUser(username, password)
+		return logid, ACL.SetUser(username, password)
 
 	case "acl":
 		var topic = key
 		var accessLevel, err = getAccessLevel(tokens[3])
 
 		if err != nil {
-			return err
+			return logid, err
 		}
-		return ACL.SetRule(username, topic, accessLevel)
+		return logid, ACL.SetRule(username, topic, accessLevel)
 
 	case "subs":
 		var topic = key
 		var qos, err = strconv.Atoi(tokens[3])
 
 		if err != nil {
-			return err
+			return logid, err
 		}
-		return ACL.SetSubscription(username, topic, qos)
+		return logid, ACL.SetSubscription(username, topic, qos)
 	}
 
-	return nil
+	return logid, nil
 }
 
 func main() {
@@ -119,7 +122,7 @@ func main() {
 	redisHost = os.Getenv("REDIS_HOST")
 	redisPort, _ = strconv.Atoi(os.Getenv("REDIS_PORT"))
 	redisPass = os.Getenv("REDIS_PASS")
-	redisDb, _  = strconv.Atoi(os.Getenv("REDIS_DB"))
+	redisDb, _ = strconv.Atoi(os.Getenv("REDIS_DB"))
 
 	if redisHost == "" {
 		redisHost = "localhost"
@@ -146,7 +149,7 @@ func main() {
 
 	if fromStdin {
 		processConfig(os.Stdin)
-	} else if file != ""{
+	} else if file != "" {
 		f, _ := os.Open(file)
 		defer f.Close()
 		processConfig(f)
