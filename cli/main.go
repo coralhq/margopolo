@@ -40,10 +40,20 @@ func getAccessLevel(str string) (int, error) {
 	}
 }
 
+func expandWithLog(key string) string {
+	val := os.Getenv(key)
+
+	if val == "" {
+		log.Printf("%s env var is not set", key)
+	}
+	
+	return val
+}
+
 func processConfig(r io.Reader) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		line := os.ExpandEnv(scanner.Text())
+		line := os.Expand(scanner.Text(), expandWithLog)
 
 		if err := processLine(strings.TrimSpace(line)); err != nil {
 			log.Fatalf("%s: %s", line, err)
